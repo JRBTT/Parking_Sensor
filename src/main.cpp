@@ -16,7 +16,7 @@
 
 #define LEDPIN PINB1
 #define BUZZERPIN PINB2
-
+#define BUTTON1 PIND2
 #define TRIGGER_PIN PIND5
 #define ECHO_PIN PIND6
 #define MAXDISTANCE 4 // m
@@ -28,6 +28,7 @@ void setMax_count_tc0(unsigned long num);
 void setPrescaler_tc1(char option);
 volatile unsigned long num0V = 0;
 volatile int toggle = 0;
+volatile int sound = 1;
 volatile unsigned int delay = 61;
 int distance = 400;
 void pulseTrigger();
@@ -77,6 +78,8 @@ void setup()
   bitSet(DDRB, BUZZERPIN); // set pin 10 as output
   bitSet(DDRD, TRIGGER_PIN); 
   bitClear(DDRD, ECHO_PIN); 
+  bitClear(DDRD, BUTTON1);
+  bitSet(PORTD, BUTTON1);
   sei(); // enable global interrupts
   setPrescaler_tc0(5);
 }
@@ -85,8 +88,19 @@ int main()
 {
   setup();
   int state = toggle;
+  static uint8_t previous_button1 = 0xFF;
   while (1)
   {
+    
+    uint8_t current_button1 = bitRead(PIND, BUTTON1);
+    if (current_button1 != previous_button1 && current_button1 == 0) {
+        _delay_ms(50);
+        if (bitRead(PIND, BUTTON1) == current_button1) {
+            sound = !sound;
+        }
+    }
+    previous_button1 = current_button1;
+
     pulseTrigger();
     float buffer = listen();
     _delay_us(10);
@@ -110,19 +124,25 @@ int main()
     usart_tx_float((float)delay, 3, 2);
     usart_transmit('\n');
     
-    
-    if (state != toggle){
-      state = toggle;
-      if (state){
-        OCR1A = 20;
-        OCR1B = 5;
-        //bitSet(PORTB, PIN);
+    if (sound){
+      if (state != toggle){
+        state = toggle;
+        if (state){
+          OCR1A = 20;
+          OCR1B = 5;
+          //bitSet(PORTB, PIN);
+        }
+        else{
+          OCR1A = 0;
+          OCR1B = 0;
+          //bitClear(PORTB, PIN);
+        }
       }
-      else{
-        OCR1A = 0;
-        OCR1B = 0;
-        //bitClear(PORTB, PIN);
-      }
+    }
+    else{
+      _delay_ms(50);
+      OCR1A = 0;
+      OCR1B = 0;
     }
   }
 }
