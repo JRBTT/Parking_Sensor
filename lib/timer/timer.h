@@ -2,6 +2,8 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-int setPrescaler_tc0(char option);
+void setPrescaler_tc0(int option);
+void setPrescaler_tc1(int option);
+void set_tc1_mode(int mode);
 
 #endif // TIMER_H

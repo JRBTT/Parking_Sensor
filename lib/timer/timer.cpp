@@ -3,48 +3,19 @@
 #include <avr/io.h>
 #include "bit.h"
 
-int setPrescaler_tc0(char option)
+void setPrescaler_tc0(int option)
 {
-  switch (option)
-  {
-  case 0:
-    // no clock source 
-    bitClear(TCCR0B, CS00);
-    bitClear(TCCR0B, CS01);
-    bitClear(TCCR0B, CS02);
-    break;
-  case 1:
-    // full clock: 16 Mhz = 62.5 ns
-    bitSet(TCCR0B, CS00);
-    bitClear(TCCR0B, CS01);
-    bitClear(TCCR0B, CS02);
-    break;
-  case 2:
-    // 1/8 clock: 2 Mhz = 500 ns
-    bitClear(TCCR0B, CS00);
-    bitSet(TCCR0B, CS01);
-    bitClear(TCCR0B, CS02);
-    break;
-  case 3:
-    // 1/64 clock: 250 kHz = 4 us
-    bitSet(TCCR0B, CS00);
-    bitSet(TCCR0B, CS01);
-    bitClear(TCCR0B, CS02);
-    break;
-  case 4:
-    // 1/256 clock: 62.5 kHz = 16 us
-    bitClear(TCCR0B, CS00);
-    bitClear(TCCR0B, CS01);
-    bitSet(TCCR0B, CS02);
-    break;
-  case 5:
-    // 1/1024 clock: 15.625 kHz = 64 us
-    bitSet(TCCR0B, CS00);
-    bitClear(TCCR0B, CS01);
-    bitSet(TCCR0B, CS02);
-    break;
-  default:
-    return -1;
-  }
-  return option;
+  TCCR0B |= ((option & 0x07) << CS00);
+}
+
+void setPrescaler_tc1(int option)
+{
+  TCCR1B |= ((option & 0x07) << CS10);
+}
+
+void set_tc1_mode(int mode){
+    TCCR1A = 0; //Clear registers
+    TCCR1B = 0;
+    TCCR1A |= ((mode & 0x03) << WGM10); //first 2 bits
+    TCCR1B |= ((mode & 0x18) << WGM12); //4th and 5th bits
 }
