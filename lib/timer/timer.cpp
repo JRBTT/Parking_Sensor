@@ -19,3 +19,4 @@ void set_tc1_mode(int mode){
     TCCR1A |= ((mode & 0x03) << WGM10); //first 2 bits
     TCCR1B |= ((mode & 0x18) << WGM12); //4th and 5th bits
 }
+    

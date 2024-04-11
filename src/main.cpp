@@ -10,9 +10,8 @@
 #define FOSC 16000000 // Frequency Oscillator 16Mhz for Uno R3
 #define BAUD 9600 // 9600 Bits per second
 #define MYUBRR FOSC / 16 / BAUD - 1 // My USART Baud Rate Register
-
+#define MAXPWM 1023
 #define MAXDELAY 61 // 1 second
-
 
 #define LEDPIN PINB1
 #define BUZZERPIN PINB2
@@ -31,6 +30,8 @@ volatile unsigned long num0V = 0;
 volatile int toggle = 0;
 volatile int sound = 1;
 volatile unsigned int delay = 61;
+volatile bool adcReady = false; 
+volatile int adcResult = 0;
 int distance = 400;
 void pulseTrigger();
 
@@ -67,6 +68,25 @@ float listen()
     return duration;
 }
 
+void setAdcbit(){
+  // ADC initialization for reading the photoresistor
+  ADMUX = (1 << REFS0) | (1 << MUX0) | (1 << MUX2);
+  ADCSRA = (1 << ADEN) | (1 << ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
+  DIDR0 = (1 << ADC5D);
+}
+
+int updateADC(){
+  bitSet(ADCSRA, ADSC); // start conversion
+}
+
+ISR(ADC_vect) {
+    // Handle the ADC conversion result
+    adcResult = ADC;
+    adcReady = true;
+   
+    // Do something with result
+}
+
 void setup()
 {
   usart_init(MYUBRR); // 103-9600 bps; 8-115200
@@ -83,6 +103,9 @@ void setup()
   bitSet(PORTD, BUTTON1);
   bitClear(DDRD, BUTTON2);
   bitSet(PORTD, BUTTON2);
+  setAdcbit(); // set ADC5 as input
+  bitSet(ADCSRA, ADEN); // enable ADC
+  bitSet(ADCSRA, ADIE); // enable ADC interrupt
   sei(); // enable global interrupts
   setPrescaler_tc0(5);
 }
@@ -94,10 +117,27 @@ int main()
   int previous_button1 = 1;
   int previous_button2 = 1;
   int volume[3] = {5, 400, 800};
+  int brightness[3] = {20, 400, 1023};
   int i = 0;
+  int newOCR1A = MAXPWM;
+
   while (1)
   {
-    
+    if (adcReady){
+      adcReady = false;
+      if (adcResult > 750) {
+        newOCR1A = brightness[0];
+      }
+      else if (adcResult >= 400 && adcResult <= 750) {
+        newOCR1A = brightness[1];
+      }
+      else{
+        newOCR1A = brightness[2];
+      }
+      // usart_tx_string("ADC: ");
+      // usart_tx_float((float)adcResult,3,2);
+      // usart_transmit('\n');
+  }
     int current_button1 = bitRead(PIND, BUTTON1);
     if (current_button1 != previous_button1 && current_button1 == 0) {
         _delay_ms(50);
@@ -151,8 +191,9 @@ int main()
       if (state != toggle){
         state = toggle;
         if (state){
-          OCR1A = 20;
+          OCR1A = newOCR1A;
           OCR1B = volume[i];
+          updateADC();
           //bitSet(PORTB, PIN);
         }
         else{
