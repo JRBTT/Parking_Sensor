@@ -88,11 +88,11 @@ int main()
 {
   setup();
   int state = toggle;
-  static uint8_t previous_button1 = 0xFF;
+  int previous_button1 = 1;
   while (1)
   {
     
-    uint8_t current_button1 = bitRead(PIND, BUTTON1);
+    int current_button1 = bitRead(PIND, BUTTON1);
     if (current_button1 != previous_button1 && current_button1 == 0) {
         _delay_ms(50);
         if (bitRead(PIND, BUTTON1) == current_button1) {
@@ -119,6 +119,10 @@ int main()
       else{
         delay = MAXDELAY * ((float)distance / 100);
       }
+    }
+    else{
+      usart_tx_string("Timeout\n");
+      buffer = 0.0;
     }
     usart_tx_string("Delay: ");
     usart_tx_float((float)delay, 3, 2);
