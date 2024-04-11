@@ -15,6 +15,7 @@
 
 
 #define LEDPIN PINB1
+#define BUZZERPIN PINB2
 
 #define TRIGGER_PIN PIND5
 #define ECHO_PIN PIND6
@@ -73,6 +74,7 @@ void setup()
   bitSet(TCCR1A, COM1A1);
   bitSet(TCCR1A, COM1B1);
   bitSet(DDRB, LEDPIN); // set pin 9 as output
+  bitSet(DDRB, BUZZERPIN); // set pin 10 as output
   bitSet(DDRD, TRIGGER_PIN); 
   bitClear(DDRD, ECHO_PIN); 
   sei(); // enable global interrupts
@@ -104,7 +106,6 @@ int main()
         delay = MAXDELAY * ((float)distance / 100);
       }
     }
-    
     usart_tx_string("Delay: ");
     usart_tx_float((float)delay, 3, 2);
     usart_transmit('\n');
@@ -114,10 +115,12 @@ int main()
       state = toggle;
       if (state){
         OCR1A = 20;
+        OCR1B = 5;
         //bitSet(PORTB, PIN);
       }
       else{
         OCR1A = 0;
+        OCR1B = 0;
         //bitClear(PORTB, PIN);
       }
     }
