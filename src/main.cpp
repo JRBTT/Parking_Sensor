@@ -22,7 +22,7 @@
 #define MAXDISTANCE 4 // m
 #define SPEED 343 // m/s
 #define TIMEOUT 23000//((MAXDISTANCE / SPEED) * 2) * 1000000 ///2 for round trip
-
+// Test line
 void setPrescaler_tc0(char option);
 void setMax_count_tc0(unsigned long num);
 void setPrescaler_tc1(char option);
